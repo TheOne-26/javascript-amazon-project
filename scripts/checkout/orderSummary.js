@@ -9,6 +9,7 @@ import { products } from '../../data/products.js';
 import { formatCurrency } from '../utils/money.js';
 import dayjs from 'https://unpkg.com/supersimpledev@8.5.0/dayjs/esm/index.js';
 import { deliveryOptions } from '../../data/deliveryOptions.js';
+import { renderPaymentSummary } from './paymentSummary.js';
 
 export function renderOrderSummary() {
   let cartSummaryHtml = '';
@@ -29,7 +30,7 @@ export function renderOrderSummary() {
     cartItem.deliveryOptionId = deliveryOptionId;
 
     const selectedOption = deliveryOptions.find(
-      (option) => option.id === deliveryOptionId
+      (option) => String(option.id) === String(deliveryOptionId)
     ) || deliveryOptions[0];
 
     const dateString = dayjs()
@@ -88,7 +89,8 @@ export function renderOrderSummary() {
         ? 'FREE'
         : `$${formatCurrency(option.priceCents)} -`;
 
-      const isChecked = option.id === cartItem.deliveryOptionId;
+      const isChecked =
+        String(option.id) === String(cartItem.deliveryOptionId);
 
       html += `
         <div
@@ -116,12 +118,17 @@ export function renderOrderSummary() {
     return html;
   }
 
-  document.querySelector('.js-order-summary').innerHTML = cartSummaryHtml;
+  document.querySelector('.js-order-summary').innerHTML =
+    cartSummaryHtml;
 
   document.querySelectorAll('.js-delete-quantity-link').forEach((link) => {
     link.addEventListener('click', () => {
-      removeFromCart(link.dataset.productId);
+      const productId = link.dataset.productId;
+
+      removeFromCart(productId);
+
       renderOrderSummary();
+      renderPaymentSummary();
     });
   });
 
@@ -130,7 +137,9 @@ export function renderOrderSummary() {
       const { productId, deliveryOptionId } = element.dataset;
 
       updateDeliveryOption(productId, deliveryOptionId);
+
       renderOrderSummary();
+      renderPaymentSummary();
     });
   });
 }
